@@ -5,8 +5,11 @@ const port = process.env.PORT || 3001;
 // Parse JSON bodies for REST endpoints
 app.use(express.json());
 
-// Keep the existing landing page
-app.get("/", (req, res) => res.type("html").send(html));
+// Track tests expect BASE_URL ("/") to return 404
+app.get("/", (req, res) => res.status(404).type("text").send("Not Found"));
+
+// Optional: keep the old landing page at a different path
+app.get("/hello", (req, res) => res.type("html").send(html));
 
 // --- Recipes REST API (for the Track challenge) ---
 let recipes = [
