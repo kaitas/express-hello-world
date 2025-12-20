@@ -2,7 +2,124 @@ const express = require("express");
 const app = express();
 const port = process.env.PORT || 3001;
 
-app.get("/", (req, res) => res.type('html').send(html));
+// Parse JSON bodies for REST endpoints
+app.use(express.json());
+
+// Keep the existing landing page
+app.get("/", (req, res) => res.type("html").send(html));
+
+// --- Recipes REST API (for the Track challenge) ---
+let recipes = [
+  {
+    id: 1,
+    title: "チキンカレー",
+    making_time: "45分",
+    serves: "4人",
+    ingredients: "玉ねぎ,肉,スパイス",
+    cost: "1000",
+  },
+  {
+    id: 2,
+    title: "オムライス",
+    making_time: "30分",
+    serves: "2人",
+    ingredients: "玉ねぎ,卵,スパイス,醤油",
+    cost: "700",
+  },
+  {
+    id: 3,
+    title: "トマトスープ",
+    making_time: "15分",
+    serves: "5人",
+    ingredients: "玉ねぎ,トマト,スパイス,水",
+    cost: "450",
+  },
+];
+let nextId = 4;
+
+// POST /recipes
+app.post("/recipes", (req, res) => {
+  const { title, making_time, serves, ingredients, cost } = req.body || {};
+
+  if (!title || !making_time || !serves || !ingredients || !cost) {
+    return res.status(200).json({
+      message: "Recipe creation failed!",
+      required: "title, making_time, serves, ingredients, cost",
+    });
+  }
+
+  const recipe = {
+    id: nextId++,
+    title,
+    making_time,
+    serves,
+    ingredients,
+    cost,
+  };
+
+  recipes.push(recipe);
+
+  return res.status(200).json({
+    message: "Recipe successfully created!",
+    recipe: [recipe],
+  });
+});
+
+// GET /recipes
+app.get("/recipes", (req, res) => {
+  return res.status(200).json({ recipes });
+});
+
+// GET /recipes/:id
+app.get("/recipes/:id", (req, res) => {
+  const recipe = recipes.find((r) => r.id === Number(req.params.id));
+
+  if (!recipe) {
+    return res.status(404).json({ message: "No Recipe found" });
+  }
+
+  return res.status(200).json({
+    message: "Recipe details by id",
+    recipe: [recipe],
+  });
+});
+
+// PATCH /recipes/:id
+app.patch("/recipes/:id", (req, res) => {
+  const recipe = recipes.find((r) => r.id === Number(req.params.id));
+
+  if (!recipe) {
+    return res.status(404).json({ message: "No Recipe found" });
+  }
+
+  const { title, making_time, serves, ingredients, cost } = req.body || {};
+
+  if (title !== undefined) recipe.title = title;
+  if (making_time !== undefined) recipe.making_time = making_time;
+  if (serves !== undefined) recipe.serves = serves;
+  if (ingredients !== undefined) recipe.ingredients = ingredients;
+  if (cost !== undefined) recipe.cost = cost;
+
+  return res.status(200).json({
+    message: "Recipe successfully updated!",
+    recipe: [recipe],
+  });
+});
+
+// DELETE /recipes/:id
+app.delete("/recipes/:id", (req, res) => {
+  const index = recipes.findIndex((r) => r.id === Number(req.params.id));
+
+  if (index === -1) {
+    return res.status(404).json({ message: "No Recipe found" });
+  }
+
+  recipes.splice(index, 1);
+
+  return res.status(200).json({
+    message: "Recipe successfully removed!",
+  });
+});
 
 const server = app.listen(port, () => console.log(`Example app listening on port ${port}!`));
 
